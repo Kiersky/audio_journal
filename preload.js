@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const log = require('electron-log');
 
 contextBridge.exposeInMainWorld('audio_journal', {
 

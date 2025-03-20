@@ -1,5 +1,26 @@
 const path = require('path');
 const { app, BrowserWindow } = require('electron');
+const log = require('electron-log');
+
+// Configure log file location and format
+log.transports.file.level = 'info';
+log.transports.console.level = 'debug';
+
+// Use log instead of console.log
+log.info('Application starting...');
+
+// Catch uncaught exceptions
+process.on('uncaughtException', (error) => {
+    log.error('Uncaught Exception:', error);
+});
+
+// Hot reload in development mode
+if (process.env.NODE_ENV !== 'production') {
+    require('electron-reload')(__dirname, {
+        // Watch these file extensions
+        electron: require(`${__dirname}/node_modules/electron`)
+    });
+}
 
 let mainWindow;
 
@@ -20,6 +41,10 @@ function createWindow() {
     });
 
     mainWindow.loadFile('index.html');
+
+    // if (process.env.NODE_ENV === 'development') {
+    //     mainWindow.webContents.openDevTools();
+    // }
 
     mainWindow.on('closed', function () {
         mainWindow = null;
