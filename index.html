@@ -8,21 +8,81 @@
 </head>
 
 <body>
-    <h1>Audio Journal App</h1>
-    <p>Welcome to your audio journal!</p>
+    <header>
+        <h1>Audio Journal App</h1>
+        <nav>
+            <button id="recordingTabBtn" class="tab-btn active">Recording</button>
+            <button id="settingsTabBtn" class="tab-btn">Settings</button>
+        </nav>
+    </header>
 
-    <div class="controls">
-        <button id="recordButton">Record</button>
-        <button id="stopButton" disabled>Stop</button>
-        <button id="playButton" disabled>Play</button>
-    </div>
+    <main>
+        <!-- Recording Tab -->
+        <section id="recordingTab" class="tab-content active">
+            <p>Welcome to your audio journal!</p>
 
-    <div class="journal-entries">
-        <!-- Journal entries will be displayed here -->
-    </div>
+            <div class="controls">
+                <button id="recordButton">Record</button>
+                <button id="stopButton" disabled>Stop</button>
+                <button id="playButton" disabled>Play</button>
+            </div>
+
+            <div class="journal-entries">
+                <!-- Journal entries will be displayed here -->
+            </div>
+        </section>
+
+        <!-- Settings Tab -->
+        <section id="settingsTab" class="tab-content">
+            <h2>Settings</h2>
+
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label for="audioQuality">Audio Quality:</label>
+                    <select id="audioQuality" name="audioQuality">
+                        <option value="low">Low (Good for long recordings)</option>
+                        <option value="medium">Medium (Default)</option>
+                        <option value="high">High (Best quality)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="saveLocation">Save Location:</label>
+                    <div class="input-with-button">
+                        <input type="text" id="saveLocation" name="saveLocation" readonly>
+                        <button type="button" id="browseFolderBtn">Browse</button>
+                    </div>
+                </div>
+
+                <div class="form-group checkbox">
+                    <input type="checkbox" id="autoSave" name="autoSave">
+                    <label for="autoSave">Automatically save recordings</label>
+                </div>
+
+                <div class="form-group">
+                    <label for="maxRecordingTime">Max Recording Time (minutes):</label>
+                    <input type="number" id="maxRecordingTime" name="maxRecordingTimeMinutes" min="1" max="120">
+                </div>
+
+                <div class="form-group">
+                    <label for="theme">Theme:</label>
+                    <select id="theme" name="theme">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="saveSettingsBtn">Save Settings</button>
+                    <button type="button" id="resetSettingsBtn">Reset to Defaults</button>
+                </div>
+            </form>
+        </section>
+    </main>
 
     <!-- Scripts loaded at end of body for performance -->
     <script src="renderer.js"></script>
+    <script src="settings-ui.js"></script>
 </body>
 
 </html>

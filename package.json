@@ -12,7 +12,8 @@
   "description": "",
   "devDependencies": {
     "electron": "^35.0.1",
-    "electron-reload": "^2.0.0-alpha.1"
+    "electron-reload": "^2.0.0-alpha.1",
+    "electron-log": "5.3.2"
   },
   "dependencies": {
     "electron-log": "^5.3.2"

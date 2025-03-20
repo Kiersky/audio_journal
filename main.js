@@ -1,6 +1,7 @@
 const path = require('path');
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const log = require('electron-log');
+const settings = require('./settings');
 
 // Configure log file location and format
 log.transports.file.level = 'info';
@@ -46,6 +47,14 @@ function createWindow() {
     //     mainWindow.webContents.openDevTools();
     // }
 
+    mainWindow.on('resize', () => {
+        const { width, height } = mainWindow.getBounds();
+        settings.updateSettings({
+            windowWidth: width,
+            windowHeight: height
+        });
+    });
+
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
@@ -65,4 +74,25 @@ app.on('activate', () => {
     if (mainWindow === null) {
         createWindow();
     }
+});
+
+// IPC handlers for settings
+ipcMain.handle('get-settings', async () => {
+    return settings.loadSettings(); // Return all settings
+});
+
+ipcMain.handle('get-setting', async (event, key) => {
+    return settings.getSetting(key);
+});
+
+ipcMain.handle('update-setting', async (event, key, value) => {
+    return settings.updateSetting(key, value);
+});
+
+ipcMain.handle('update-settings', async (event, newSettings) => {
+    return settings.updateSettings(newSettings);
+});
+
+ipcMain.handle('reset-settings', async () => {
+    return settings.resetToDefaults();
 });
