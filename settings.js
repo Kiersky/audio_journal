@@ -21,7 +21,9 @@ class SettingsManager {
             saveLocation: path.join(app.getPath('documents'), 'AudioJournal'),
             autoSave: true,
             maxRecordingTimeMinutes: 30,
-            theme: 'light' // light, dark
+            theme: 'light', // light, dark
+            windowWidth: 800,
+            windowHeight: 600,
         };
 
         // The current settings object that will be used throughout the app

@@ -1,8 +1,17 @@
 const path = require('path');
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const log = require('electron-log');
 const settings = require('./settings');
 
+// Simple debounce function to prevent excessive calls
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
 // Configure log file location and format
 log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
@@ -26,9 +35,28 @@ if (process.env.NODE_ENV !== 'production') {
 let mainWindow;
 
 function createWindow() {
-    mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
+    // Make sure settings are loaded before creating the window
+    settings.loadSettings();
+
+    // Get display dimensions
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { width: maxWidth, height: maxHeight } = primaryDisplay.workAreaSize;
+
+    // Apply window size from settings or use defaults
+    let width = settings.getSetting('windowWidth') || 800;
+    let height = settings.getSetting('windowHeight') || 600;
+
+    // Ensure window size is reasonable (not larger than screen)
+    width = Math.min(width, maxWidth);
+    height = Math.min(height, maxHeight);
+
+    // Also ensure minimum reasonable size
+    width = Math.max(width, 400);
+    height = Math.max(height, 300);
+
+    const windowSettings = {
+        width,
+        height,
         webPreferences: {
             // Security: Isolate renderer process from Node.js environment
             nodeIntegration: false,
@@ -39,21 +67,29 @@ function createWindow() {
             // Security: Restrict renderer to same origin content
             contextIsolation: true
         },
-    });
+    };
+
+    mainWindow = new BrowserWindow(windowSettings);
+
 
     mainWindow.loadFile('index.html');
 
-    // if (process.env.NODE_ENV === 'development') {
-    //     mainWindow.webContents.openDevTools();
-    // }
+    if (process.env.NODE_ENV === 'development') {
+        mainWindow.webContents.openDevTools();
+    }
 
-    mainWindow.on('resize', () => {
-        const { width, height } = mainWindow.getBounds();
-        settings.updateSettings({
-            windowWidth: width,
-            windowHeight: height
-        });
-    });
+    // Save window size when it's resized - but only when not maximized
+    mainWindow.on('resize', debounce(() => {
+        // Don't save maximized dimensions
+        if (!mainWindow.isMaximized() && !mainWindow.isFullScreen()) {
+            const { width, height } = mainWindow.getBounds();
+            settings.updateSettings({
+                windowWidth: width,
+                windowHeight: height
+            });
+            log.info(`Window resized to ${width}x${height}`);
+        }
+    }, 500));
 
     mainWindow.on('closed', function () {
         mainWindow = null;
