@@ -2,6 +2,8 @@ const path = require('path');
 const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const log = require('electron-log');
 const settings = require('./settings');
+const database = require('./database/db');
+const { journalDao } = require('./database/dao');
 
 // Simple debounce function to prevent excessive calls
 function debounce(func, wait) {
@@ -96,12 +98,44 @@ function createWindow() {
     });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+    try {
+        // Initialize database
+        await database.initialize();
+        log.info('Database initialized successfully');
+
+        // Set up IPC handlers
+        setupIPCHandlers();
+
+        // Create the main window
+        createWindow();
+    } catch (error) {
+        log.error('Failed to initialize application:', error);
+        app.quit();
+    }
+});
 
 // Quit when all windows are closed (except on macOS)
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
+    }
+});
+
+app.on('will-quit', async (event) => {
+    // Prevent the app from quitting immediately
+    event.preventDefault();
+
+    try {
+        // Close database connection
+        await database.close();
+        log.info('Database connection closed');
+
+        // Now we can quit
+        app.exit();
+    } catch (error) {
+        log.error('Error during app cleanup:', error);
+        app.exit(1); // Force quit with error code
     }
 });
 
@@ -132,3 +166,77 @@ ipcMain.handle('update-settings', async (event, newSettings) => {
 ipcMain.handle('reset-settings', async () => {
     return settings.resetToDefaults();
 });
+
+// IPC handlers for database operations
+function setupIPCHandlers() {
+    const journalDAO = require('./database/dao');
+
+    // Entry operations
+    ipcMain.handle('create-entry', async (event, entryData) => {
+        return journalDAO.createEntry(entryData);
+    });
+
+    ipcMain.handle('get-all-entries', async (event, options) => {
+        return journalDAO.getAllEntries(options);
+    });
+
+    ipcMain.handle('get-entry', async (event, id, includeTags) => {
+        return journalDAO.getEntry(id, includeTags);
+    });
+
+    ipcMain.handle('update-entry', async (event, entryData) => {
+        return journalDAO.updateEntry(entryData);
+    });
+
+    ipcMain.handle('delete-entry', async (event, id) => {
+        return journalDAO.deleteEntry(id);
+    });
+
+    ipcMain.handle('search-entries', async (event, keyword) => {
+        return journalDAO.searchEntries(keyword);
+    });
+
+    // Tag operations
+    ipcMain.handle('create-tag', async (event, name) => {
+        return journalDAO.createTag(name);
+    });
+
+    ipcMain.handle('get-all-tags', async () => {
+        return journalDAO.getAllTags();
+    });
+
+    ipcMain.handle('tag-entry', async (event, entryId, tagId) => {
+        return journalDAO.tagEntry(entryId, tagId);
+    });
+
+    ipcMain.handle('untag-entry', async (event, entryId, tagId) => {
+        return journalDAO.untagEntry(entryId, tagId);
+    });
+
+    ipcMain.handle('get-tags-for-entry', async (event, entryId) => {
+        return journalDAO.getTagsForEntry(entryId);
+    });
+
+    ipcMain.handle('get-entries-with-tag', async (event, tagId) => {
+        return journalDAO.getEntriesWithTag(tagId);
+    });
+
+    // Example of transaction usage
+    ipcMain.handle('add-entry-with-tags', async (event, entryData, tagNames) => {
+        return journalDAO.transaction(async (dao) => {
+            // Create entry
+            const entryId = await dao.createEntry(entryData);
+
+            // Add all tags
+            const tagPromises = tagNames.map(async (tagName) => {
+                const tagId = await dao.createTag(tagName);
+                return dao.tagEntry(entryId, tagId);
+            });
+
+            await Promise.all(tagPromises);
+
+            // Return the complete entry with tags
+            return dao.getEntry(entryId, true);
+        });
+    });
+}
