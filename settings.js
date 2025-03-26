@@ -11,10 +11,10 @@ class SettingsManager {
         // This is a good practice as it's a standard location for app settings
         this.settingsPath = path.join(app.getPath('userData'), 'settings.json');
 
-        console.log('App name:', app.getName());
-        console.log('User data path:', app.getPath('userData'));
-        console.log('Settings path:', this.settingsPath);
-        console.log('Log path:', log.transports.file.getFile().path);
+        log.info('App name:', app.getName());
+        log.info('User data path:', app.getPath('userData'));
+        log.info('Settings path:', this.settingsPath);
+        log.info('Log path:', log.transports.file.getFile().path);
         // Default settings that will be used if no settings file exists
         this.defaultSettings = {
             audioQuality: 'medium', // low, medium, high
@@ -62,23 +62,21 @@ class SettingsManager {
         try {
             // Ensure the directory exists
             const directory = path.dirname(this.settingsPath);
-            console.log('Directory to create:', directory);
+            log.info('Directory to create:', directory);
 
             if (!fs.existsSync(directory)) {
-                console.log('Directory does not exist, creating...');
+                log.info('Directory does not exist, creating...');
                 fs.mkdirSync(directory, { recursive: true });
             } else {
-                console.log('Directory already exists');
+                log.info('Directory already exists');
             }
 
             // Write the settings to the file
-            console.log('Writing settings to:', this.settingsPath);
+            log.info('Writing settings to:', this.settingsPath);
             fs.writeFileSync(this.settingsPath, JSON.stringify(this.settings, null, 2), 'utf8');
-            console.log('Settings saved successfully');
             log.info('Settings saved successfully');
             return true;
         } catch (error) {
-            console.error('Failed to save settings:', error);
             log.error('Failed to save settings:', error);
             return false;
         }

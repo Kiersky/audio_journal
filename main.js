@@ -5,26 +5,12 @@ const settings = require('./settings');
 const database = require('./database/db');
 const { journalDao } = require('./database/dao');
 
-// Simple debounce function to prevent excessive calls
-function debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-        const context = this;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), wait);
-    };
-}
 // Configure log file location and format
 log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
 
 // Use log instead of console.log
 log.info('Application starting...');
-
-// Catch uncaught exceptions
-process.on('uncaughtException', (error) => {
-    log.error('Uncaught Exception:', error);
-});
 
 // Hot reload in development mode
 if (process.env.NODE_ENV !== 'production') {
@@ -36,6 +22,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 let mainWindow;
 
+
+//Creates the main application window with specified settings and security configurations.
 function createWindow() {
     // Make sure settings are loaded before creating the window
     settings.loadSettings();
@@ -104,8 +92,8 @@ app.whenReady().then(async () => {
         await database.initialize();
         log.info('Database initialized successfully');
 
-        // Set up IPC handlers
-        setupIPCHandlers();
+        // // Set up IPC handlers
+        // setupIPCHandlers();
 
         // Create the main window
         createWindow();
@@ -145,6 +133,19 @@ app.on('activate', () => {
         createWindow();
     }
 });
+// Catch uncaught exceptions
+process.on('uncaughtException', (error) => {
+    log.error('Uncaught Exception:', error);
+});
+// Simple debounce function to prevent excessive calls
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
 
 // IPC handlers for settings
 ipcMain.handle('get-settings', async () => {
@@ -168,75 +169,75 @@ ipcMain.handle('reset-settings', async () => {
 });
 
 // IPC handlers for database operations
-function setupIPCHandlers() {
-    const journalDAO = require('./database/dao');
+// function setupIPCHandlers() {
 
-    // Entry operations
-    ipcMain.handle('create-entry', async (event, entryData) => {
-        return journalDAO.createEntry(entryData);
-    });
 
-    ipcMain.handle('get-all-entries', async (event, options) => {
-        return journalDAO.getAllEntries(options);
-    });
+// Entry operations
+ipcMain.handle('create-entry', async (event, entryData) => {
+    return journalDAO.createEntry(entryData);
+});
 
-    ipcMain.handle('get-entry', async (event, id, includeTags) => {
-        return journalDAO.getEntry(id, includeTags);
-    });
+ipcMain.handle('get-all-entries', async (event, options) => {
+    return journalDAO.getAllEntries(options);
+});
 
-    ipcMain.handle('update-entry', async (event, entryData) => {
-        return journalDAO.updateEntry(entryData);
-    });
+ipcMain.handle('get-entry', async (event, id, includeTags) => {
+    return journalDAO.getEntry(id, includeTags);
+});
 
-    ipcMain.handle('delete-entry', async (event, id) => {
-        return journalDAO.deleteEntry(id);
-    });
+ipcMain.handle('update-entry', async (event, entryData) => {
+    return journalDAO.updateEntry(entryData);
+});
 
-    ipcMain.handle('search-entries', async (event, keyword) => {
-        return journalDAO.searchEntries(keyword);
-    });
+ipcMain.handle('delete-entry', async (event, id) => {
+    return journalDAO.deleteEntry(id);
+});
 
-    // Tag operations
-    ipcMain.handle('create-tag', async (event, name) => {
-        return journalDAO.createTag(name);
-    });
+ipcMain.handle('search-entries', async (event, keyword) => {
+    return journalDAO.searchEntries(keyword);
+});
 
-    ipcMain.handle('get-all-tags', async () => {
-        return journalDAO.getAllTags();
-    });
+// Tag operations
+ipcMain.handle('create-tag', async (event, name) => {
+    return journalDAO.createTag(name);
+});
 
-    ipcMain.handle('tag-entry', async (event, entryId, tagId) => {
-        return journalDAO.tagEntry(entryId, tagId);
-    });
+ipcMain.handle('get-all-tags', async () => {
+    return journalDAO.getAllTags();
+});
 
-    ipcMain.handle('untag-entry', async (event, entryId, tagId) => {
-        return journalDAO.untagEntry(entryId, tagId);
-    });
+ipcMain.handle('tag-entry', async (event, entryId, tagId) => {
+    return journalDAO.tagEntry(entryId, tagId);
+});
 
-    ipcMain.handle('get-tags-for-entry', async (event, entryId) => {
-        return journalDAO.getTagsForEntry(entryId);
-    });
+ipcMain.handle('untag-entry', async (event, entryId, tagId) => {
+    return journalDAO.untagEntry(entryId, tagId);
+});
 
-    ipcMain.handle('get-entries-with-tag', async (event, tagId) => {
-        return journalDAO.getEntriesWithTag(tagId);
-    });
+ipcMain.handle('get-tags-for-entry', async (event, entryId) => {
+    return journalDAO.getTagsForEntry(entryId);
+});
 
-    // Example of transaction usage
-    ipcMain.handle('add-entry-with-tags', async (event, entryData, tagNames) => {
-        return journalDAO.transaction(async (dao) => {
-            // Create entry
-            const entryId = await dao.createEntry(entryData);
+ipcMain.handle('get-entries-with-tag', async (event, tagId) => {
+    return journalDAO.getEntriesWithTag(tagId);
+});
 
-            // Add all tags
-            const tagPromises = tagNames.map(async (tagName) => {
-                const tagId = await dao.createTag(tagName);
-                return dao.tagEntry(entryId, tagId);
-            });
+// Example of transaction usage
+ipcMain.handle('add-entry-with-tags', async (event, entryData, tagNames) => {
+    return journalDAO.transaction(async (dao) => {
+        // Create entry
+        const entryId = await dao.createEntry(entryData);
 
-            await Promise.all(tagPromises);
-
-            // Return the complete entry with tags
-            return dao.getEntry(entryId, true);
+        // Add all tags
+        const tagPromises = tagNames.map(async (tagName) => {
+            const tagId = await dao.createTag(tagName);
+            return dao.tagEntry(entryId, tagId);
         });
+
+        await Promise.all(tagPromises);
+
+        // Return the complete entry with tags
+        return dao.getEntry(entryId, true);
     });
-}
+});
+//}
