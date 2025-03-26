@@ -4,6 +4,7 @@ const log = require('electron-log');
 const settings = require('./settings');
 const database = require('./database/db');
 const { journalDao } = require('./database/dao');
+const audioFileManager = require('./audioFileManager');
 
 // Configure log file location and format
 log.transports.file.level = 'info';
@@ -241,3 +242,38 @@ ipcMain.handle('add-entry-with-tags', async (event, entryData, tagNames) => {
     });
 });
 //}
+
+// IPC handlers for audio file operations
+ipcMain.handle('get-audio-file', async (event, id) => {
+    try {
+        return await audioFileManager.readAudioFile(id);
+    } catch (error) {
+        log.error('Failed to read audio file:', error);
+        throw error;
+    }
+});
+
+ipcMain.handle('save-audio-file', async (event, id, audioData) => {
+    try {
+        return await audioFileManager.saveAudioFile(id, Buffer.from(audioData));
+    } catch (error) {
+        log.error('Failed to save audio file:', error);
+        throw error;
+    }
+});
+ipcMain.handle('list-audio-files', async () => {
+    try {
+        return await audioFileManager.listAudioFiles();
+    } catch (error) {
+        log.error('Failed to list audio files:', error);
+        throw error;
+    }
+});
+ipcMain.handle('save-audio-to-custom-path', async (event, id, audioData, customPath) => {
+    try {
+        return await audioFileManager.saveToCustomPath(id, Buffer.from(audioData), customPath);
+    } catch (error) {
+        log.error('Failed to save audio file to custom location:', error);
+        throw error;
+    }
+});

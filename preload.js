@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+//const { listAudioFiles, saveToCustomPath } = require('./audioFileManager');
 
 contextBridge.exposeInMainWorld('audioJournal', {
 
@@ -50,4 +51,15 @@ contextBridge.exposeInMainWorld('database', {
     // Compound operations
     addEntryWithTags: (entryData, tagNames) =>
         ipcRenderer.invoke('add-entry-with-tags', entryData, tagNames)
+});
+
+// Expose audio file manager APIs to the renderer process
+contextBridge.exposeInMainWorld('audioFiles', {
+    getAudioFile: (id) => ipcRenderer.invoke('get-audio-file', id),
+    saveAudioFile: (id, audioData) => ipcRenderer.invoke('save-audio-file', id, audioData),
+    deleteAudioFile: (id) => ipcRenderer.invoke('delete-audio-file', id),
+    listAudioFiles: () => ipcRenderer.invoke('list-audio-files'),
+    saveToCustomPath: (id, audioData, customPath) =>
+        ipcRenderer.invoke('save-to-custom-path', id, audioData, customPath)
+
 });
