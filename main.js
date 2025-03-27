@@ -5,6 +5,7 @@ const settings = require('./settings');
 const database = require('./database/db');
 const { journalDao } = require('./database/dao');
 const audioFileManager = require('./audioFileManager');
+const audioRecorder = require('./audioRecorder');
 
 // Configure log file location and format
 log.transports.file.level = 'info';
@@ -274,6 +275,34 @@ ipcMain.handle('save-audio-to-custom-path', async (event, id, audioData, customP
         return await audioFileManager.saveToCustomPath(id, Buffer.from(audioData), customPath);
     } catch (error) {
         log.error('Failed to save audio file to custom location:', error);
+        throw error;
+    }
+});
+
+// IPC handlers for audio recording
+ipcMain.handle('start-recording', async () => {
+    try {
+        return await audioRecorder.startRecording();
+    } catch (error) {
+        log.error('Failed to start recording:', error);
+        throw error;
+    }
+});
+
+ipcMain.handle('stop-recording', async () => {
+    try {
+        return await audioRecorder.stopRecording(mainWindow);
+    } catch (error) {
+        log.error('Failed to stop recording:', error);
+        throw error;
+    }
+});
+
+ipcMain.handle('play-recording', async (event, id) => {
+    try {
+        return await audioRecorder.playRecording(id);
+    } catch (error) {
+        log.error('Failed to play recording:', error);
         throw error;
     }
 });
