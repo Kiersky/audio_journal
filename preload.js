@@ -27,7 +27,9 @@ contextBridge.exposeInMainWorld('settings', {
     updateMultiple: (newSettings) => ipcRenderer.invoke('update-settings', newSettings),
 
     // Reset all settings to defaults
-    reset: () => ipcRenderer.invoke('reset-settings')
+    reset: () => ipcRenderer.invoke('reset-settings'),
+
+    browseDirectory: () => ipcRenderer.invoke('open-directory-dialog')
 });
 
 // Expose database APIs to the renderer process
@@ -60,6 +62,7 @@ contextBridge.exposeInMainWorld('audioFiles', {
     deleteAudioFile: (id) => ipcRenderer.invoke('delete-audio-file', id),
     listAudioFiles: () => ipcRenderer.invoke('list-audio-files'),
     saveToCustomPath: (id, audioData, customPath) =>
-        ipcRenderer.invoke('save-to-custom-path', id, audioData, customPath)
+        ipcRenderer.invoke('save-to-custom-path', id, audioData, customPath),
+    updateStorageLocation: (newPath) => ipcRenderer.invoke('update-audio-storage-location', newPath)
 
 });

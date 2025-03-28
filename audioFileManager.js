@@ -2,11 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
 const log = require('electron-log');
+const settings = require('./settings');
 
 class AudioFileManager {
     constructor() {
         //base directory for recordings
-        this.baseDir = path.join(app.getPath('userData'), 'recordings');
+        const userSaveLocation = settings.getSetting('saveLocation');
+        this.baseDir = userSaveLocation || path.join(app.getPath('userData'), 'recordings');
 
         this.ensureDirectoryExists();
 
@@ -96,6 +98,16 @@ class AudioFileManager {
                 }
             });
         });
+    }
+
+    updateBaseDirectory(newPath) {
+        if (newPath === this.baseDir) {
+            log.info('New path is the same as the current base directory. No changes made.');
+            return;
+        }
+        this.baseDir = newPath;
+        this.ensureDirectoryExists();
+        log.info('Base directory updated to:', this.baseDir);
     }
 
     getCustomStoragePath(customPath, id, format = 'wav') {

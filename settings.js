@@ -93,12 +93,39 @@ class SettingsManager {
     // Update a specific setting
     updateSetting(key, value) {
         this.settings[key] = value;
+        log.info(`Updated setting ${key} to ${value}`);//test
         return this.saveSettings();
     }
 
     // Update multiple settings at once
     updateSettings(newSettings) {
+        // Track which settings are actually changing
+        const changedSettings = {};
+
+        // Compare each new setting with current value
+        Object.entries(newSettings).forEach(([key, newValue]) => {
+            const currentValue = this.settings[key];
+
+            // Only track settings that are actually changing
+            // Use JSON.stringify to properly compare objects and arrays
+            if (JSON.stringify(currentValue) !== JSON.stringify(newValue)) {
+                changedSettings[key] = {
+                    from: currentValue,
+                    to: newValue
+                };
+            }
+        });
+
+        // Apply all updates (even unchanged ones as the caller expects)
         this.settings = { ...this.settings, ...newSettings };
+
+        // Only log if there were actual changes
+        if (Object.keys(changedSettings).length > 0) {
+            log.info('Settings changed:', changedSettings);
+        } else {
+            log.debug('updateSettings called but no values changed');
+        }
+
         return this.saveSettings();
     }
 

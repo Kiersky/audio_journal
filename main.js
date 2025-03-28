@@ -169,6 +169,22 @@ ipcMain.handle('update-settings', async (event, newSettings) => {
 ipcMain.handle('reset-settings', async () => {
     return settings.resetToDefaults();
 });
+ipcMain.handle('open-directory-dialog', async () => {
+    const { dialog } = require('electron');
+    try {
+        const result = await dialog.showOpenDialog({
+            properties: ['openDirectory', 'createDirectory']
+        });
+        if (result.canceled) {
+            return null;
+        } else {
+            return result.filePaths[0];
+        }
+    } catch (error) {
+        log.error('Error opening directory dialog:', error);
+        throw error;
+    }
+});
 
 // IPC handlers for database operations
 // function setupIPCHandlers() {
@@ -275,6 +291,18 @@ ipcMain.handle('save-audio-to-custom-path', async (event, id, audioData, customP
         return await audioFileManager.saveToCustomPath(id, Buffer.from(audioData), customPath);
     } catch (error) {
         log.error('Failed to save audio file to custom location:', error);
+        throw error;
+    }
+});
+ipcMain.handle('update-audio-storage-location', async (event, newLocation) => {
+    try {
+        await settings.updateSetting('saveLocation', newLocation);
+
+        audioFileManager.updateBaseDir(newLocation);
+
+        return { success: true, location: newLocation };
+    } catch (error) {
+        log.error('Failed to update audio storage location:', error);
         throw error;
     }
 });

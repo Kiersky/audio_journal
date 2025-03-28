@@ -103,8 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Browse for folder is not implemented in this version
     // In a real app, you would use dialog.showOpenDialog from the main process
-    browseFolderBtn.addEventListener('click', () => {
-        alert('This feature is not implemented in this version.');
+    browseFolderBtn.addEventListener('click', async () => {
+        try {
+            const selectedDirectory = await window.settings.browseDirectory();
+            if (selectedDirectory) {
+                saveLocationInput.value = selectedDirectory;
+            }
+        } catch (error) {
+            console.error('Failed to open directory dialog:', error);
+            alert('Failed to open directory dialog. Please try again.');
+        }
     });
 
     // Load settings on initial page load
